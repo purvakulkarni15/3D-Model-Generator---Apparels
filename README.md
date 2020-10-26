@@ -1,16 +1,8 @@
 # Rapid-Digitization-Of-Articles
 
-### Language, libraries and SDKS:
+![](gif.gif)
 
-<pre>
-1. C/C++
-2. Win32 SDK (Windowing and event handling) //GlUT/GLFW can be used instead
-3. Glew (OpenGL wrangler Library)
-4. Glm (OpenGl assisting Lib)
-5. OpenCV-3.46
-</pre>
-
-### Methodology
+### Software Algorithm
 
 <pre>
 1. Obtain back and front images of a clothing article (preferably with plain background).
@@ -27,6 +19,17 @@
 <img src="https://github.com/purvakulkarni15/Rapid-Digitization-Of-Articles/blob/main/Result/Sample-1-3d.PNG" width="250" height="260">
 </pre>
 
+### Language, libraries and SDKS:
+
+<pre>
+1. C/C++
+2. Win32 SDK (Windowing and event handling) //GlUT/GLFW can be used instead
+3. Glew (OpenGL wrangler Library)
+4. Glm (OpenGl assisting Lib)
+5. OpenCV-3.46
+</pre>
+
+
 ### Results
 <img src="https://github.com/purvakulkarni15/Rapid-Digitization-Of-Apparels/blob/master/Result/dresses.PNG" width="1083" height="578">
-<img src="https://github.com/purvakulkarni15/Rapid-Digitization-Of-Apparels/blob/master/Result/dresses1.PNG" width="1083" height="578">
+
