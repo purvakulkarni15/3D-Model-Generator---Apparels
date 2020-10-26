@@ -43,7 +43,7 @@ bool RayCaster::isRayTriangleIntersect(Triangle t, Ray ray, glm::vec3* intersect
 
 	w = glm::dot(v0v2, qvec) * invDet;
 
-	if (w < 0)
+	if (w >= 0)
 	{
 		*intersectionPoint = glm::vec3(ray.dir.x*w, ray.dir.y*w, ray.dir.z*w);
 		*intersectionPoint = ray.orig + *intersectionPoint;

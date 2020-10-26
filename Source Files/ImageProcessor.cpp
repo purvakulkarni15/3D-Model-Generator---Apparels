@@ -25,7 +25,7 @@ Mat ImageProcessor::executeBackgroundSubstraction(Mat image) {
 	Mat grayScaleImage, blurImage, resultImage;
 	resultImage = Mat::zeros(image.rows, image.cols, CV_8UC3);
 
-	blur(image, blurImage, cv::Size(7, 7));
+	blur(image, blurImage, cv::Size(15, 15));
 
 	for (int i = 0; i < blurImage.rows; i++)
 	{
@@ -46,6 +46,20 @@ Mat ImageProcessor::executeBackgroundSubstraction(Mat image) {
 				color[2] = 0;
 				resultImage.at<cv::Vec3b>(cv::Point(j, i)) = color;
 			}
+
+			/*if (color[0] >= 5 && color[1] >= 5 && color[2] >= 5)
+			{
+				color[0] = 255;
+				color[1] = 255;
+				color[2] = 255;
+				resultImage.at<cv::Vec3b>(cv::Point(j, i)) = color;
+			}
+			else {
+				color[0] = 0;
+				color[1] = 0;
+				color[2] = 0;
+				resultImage.at<cv::Vec3b>(cv::Point(j, i)) = color;
+			}*/
 		}
 	}
 
@@ -61,7 +75,7 @@ void ImageProcessor::processFrontImage() {
 
 	Mat backgroundSubstactedImage = executeBackgroundSubstraction(frontImage);
 	Mat element = getStructuringElement(MORPH_RECT,
-		Size(15,15),
+		Size(21,21),
 		Point(7, 7));
 
 	/// Apply the erosion operation
@@ -74,7 +88,7 @@ void ImageProcessor::processBackImage() {
 
 	Mat backgroundSubstactedImage = executeBackgroundSubstraction(backImage);
 	Mat element = getStructuringElement(MORPH_RECT,
-		Size(15, 15),
+		Size(21, 21),
 		Point(7, 7));
 
 	/// Apply the erosion operation

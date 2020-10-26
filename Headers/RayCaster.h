@@ -4,7 +4,7 @@
 class RayCaster
 {
 public:
-	bool IsRayTriangleIntersect(Triangle t, Ray ray, glm::vec3* intersectionPoint, float* distance);
+	bool isRayTriangleIntersect(Triangle t, Ray ray, glm::vec3* intersectionPoint, float* distance);
 	RayCaster();
 	~RayCaster();
 };

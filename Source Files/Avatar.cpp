@@ -8,6 +8,8 @@ Avatar::Avatar()
 Avatar::~Avatar()
 {
 }
+
+
 void Avatar::loadModel(const char* file)
 {
 	FILE* fp;
@@ -88,7 +90,7 @@ void Avatar::loadModel(const char* file)
 					}
 				} while (ch != '\n');
 
-				Triangle t = Triangle(&particles[vertices[2] - 1], &particles[vertices[1] - 1], &particles[vertices[0] - 1]);
+				Triangle t = Triangle(&particles[vertices[0] - 1], &particles[vertices[1] - 1], &particles[vertices[2] - 1]);
 				triangles.push_back(t);
 
 			}
@@ -148,13 +150,4 @@ void Avatar::loadModel(const char* file)
 
 
 	}
-
-	/*boundingBox[0].x = -(width / 2.0);
-	boundingBox[0].y = -(height / 2.0);
-	boundingBox[0].z = -(depth / 2.0);
-
-	boundingBox[1].x = boundingBox[1].x - boundingBox[0].x -(width / 2.0);
-	boundingBox[1].y = boundingBox[1].y - boundingBox[0].y -(height / 2.0);
-	boundingBox[1].z = boundingBox[1].z - boundingBox[0].z -(depth / 2.0);*/
-
 }

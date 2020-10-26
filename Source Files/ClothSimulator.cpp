@@ -24,7 +24,7 @@ void ClothSimulator::addConstraints(Apparel* apparel)
 	for (int i = 0; i < apparel->edgesF.size(); i++) {
 		//Add Structural Constraints
 		if (!apparel->edgesF[i].remove) {
-			constraintsF.push_back(Constraint(apparel->edgesF[i].p1, apparel->edgesF[i].p2));
+			constraintsF.push_back(Constraint(apparel->edgesF[i].p1, apparel->edgesF[i].p2, 1));
 		}
 
 	}
@@ -32,11 +32,11 @@ void ClothSimulator::addConstraints(Apparel* apparel)
 	for (int i = 0; i < apparel->boundaryPointsF.size()-2; i++) {
 		
 		//Add Flexion Constraints
-		constraintsF.push_back(Constraint(apparel->boundaryPointsF[i], apparel->boundaryPointsF[i+2]));
+		constraintsF.push_back(Constraint(apparel->boundaryPointsF[i], apparel->boundaryPointsF[i+2], 1));
 	}
 
-	constraintsF.push_back(Constraint(apparel->boundaryPointsF[apparel->boundaryPointsF.size() - 2], apparel->boundaryPointsF[0]));
-	constraintsF.push_back(Constraint(apparel->boundaryPointsF[apparel->boundaryPointsF.size() - 1], apparel->boundaryPointsF[1]));
+	constraintsF.push_back(Constraint(apparel->boundaryPointsF[apparel->boundaryPointsF.size() - 2], apparel->boundaryPointsF[0], 1));
+	constraintsF.push_back(Constraint(apparel->boundaryPointsF[apparel->boundaryPointsF.size() - 1], apparel->boundaryPointsF[1], 1));
 
 	for (int i = 0; i < sizeY; i+= apparel->interval*2)
 	{
@@ -45,12 +45,12 @@ void ClothSimulator::addConstraints(Apparel* apparel)
 			//Add Bend(Flexion) Constraints
 			if (j + apparel->interval * 4 < sizeX) {
 				if (clothMatrixF[i*sizeX + j]->index != -1 && clothMatrixF[i*sizeX + j + apparel->interval * 4]->index != -1) {
-					constraintsF.push_back(Constraint(clothMatrixF[i*sizeX + j], clothMatrixF[i*sizeX + j + apparel->interval * 4]));
+					constraintsF.push_back(Constraint(clothMatrixF[i*sizeX + j], clothMatrixF[i*sizeX + j + apparel->interval * 4], 2));
 				}
 			}
 			if (i + apparel->interval * 4 < sizeY) {
 				if (clothMatrixF[i*sizeX + j]->index != -1 && clothMatrixF[(i + apparel->interval * 4) * sizeX + j]->index != -1) {
-					constraintsF.push_back(Constraint(clothMatrixF[i*sizeX + j], clothMatrixF[(i + apparel->interval * 4)*sizeX + j]));
+					constraintsF.push_back(Constraint(clothMatrixF[i*sizeX + j], clothMatrixF[(i + apparel->interval * 4)*sizeX + j], 2));
 				}
 			}
 		}
@@ -66,17 +66,17 @@ void ClothSimulator::addConstraints(Apparel* apparel)
 	for (int i = 0; i < apparel->edgesB.size(); i++) {
 		//Add Structural Constraints
 		if (!apparel->edgesB[i].remove) {
-			constraintsB.push_back(Constraint(apparel->edgesB[i].p1, apparel->edgesB[i].p2));
+			constraintsB.push_back(Constraint(apparel->edgesB[i].p1, apparel->edgesB[i].p2, 1));
 		}
 	}
 
 	for (int i = 0; i < apparel->boundaryPointsB.size() - 2; i++) {
 		//Add Flexion Constraints
-		constraintsB.push_back(Constraint(apparel->boundaryPointsB[i], apparel->boundaryPointsB[i + 2]));
+		constraintsB.push_back(Constraint(apparel->boundaryPointsB[i], apparel->boundaryPointsB[i + 2], 1));
 	}
 
-	constraintsB.push_back(Constraint(apparel->boundaryPointsB[apparel->boundaryPointsB.size() - 2], apparel->boundaryPointsB[0]));
-	constraintsB.push_back(Constraint(apparel->boundaryPointsB[apparel->boundaryPointsB.size() - 1], apparel->boundaryPointsB[1]));
+	constraintsB.push_back(Constraint(apparel->boundaryPointsB[apparel->boundaryPointsB.size() - 2], apparel->boundaryPointsB[0], 1));
+	constraintsB.push_back(Constraint(apparel->boundaryPointsB[apparel->boundaryPointsB.size() - 1], apparel->boundaryPointsB[1], 1));
 
 	for (int i = 0; i < sizeY; i += apparel->interval * 2)
 	{
@@ -85,12 +85,12 @@ void ClothSimulator::addConstraints(Apparel* apparel)
 			//Add Bend(Flexion) Constraints
 			if (j + apparel->interval * 4 < sizeX) {
 				if (clothMatrixB[i*sizeX + j]->index != -1 && clothMatrixB[i*sizeX + j + apparel->interval * 4]->index != -1) {
-					constraintsB.push_back(Constraint(clothMatrixB[i*sizeX + j], clothMatrixB[i*sizeX + j + apparel->interval * 4]));
+					constraintsB.push_back(Constraint(clothMatrixB[i*sizeX + j], clothMatrixB[i*sizeX + j + apparel->interval * 4], 2));
 				}
 			}
 			if (i + apparel->interval * 4 < sizeY) {
 				if (clothMatrixB[i*sizeX + j]->index != -1 && clothMatrixB[(i + apparel->interval * 4) * sizeX + j]->index != -1) {
-					constraintsB.push_back(Constraint(clothMatrixB[i*sizeX + j], clothMatrixB[(i + apparel->interval * 4)*sizeX + j]));
+					constraintsB.push_back(Constraint(clothMatrixB[i*sizeX + j], clothMatrixB[(i + apparel->interval * 4)*sizeX + j], 2));
 				}
 			}
 		}
@@ -149,38 +149,93 @@ void ClothSimulator::satisfyConstraints(int i){
 	
 	if (i == 1) {
 
-		for (int i = 0; i < 50; i++)
+		for (int i = 0; i < 20; i++)
 		{
 			for (int j = 0; j < constraintsF.size(); j++)
 			{
-				constraintsF[j].satisfy(i);
+				if (constraintsF[j].p1->isStatic && constraintsF[j].p2->isStatic) {
+					constraintsF[j].satisfy(false, true, false, 0);
+				}
 			}
 		}
 
-
-		for (int i = 0; i < 50; i++)
+		for (int i = 0; i < 20; i++)
 		{
 			for (int j = 0; j < constraintsB.size(); j++)
 			{
-				constraintsB[j].satisfy(i);
+				if (constraintsB[j].p1->isStatic && constraintsB[j].p2->isStatic) {
+					constraintsB[j].satisfy(false, true, false, 0);
+				}
 			}
 		}
+
+		for (int i = 0; i < 10; i++)
+		{
+			for (int j = 0; j < constraintsB.size(); j++)
+			{
+				constraintsB[j].satisfy(false, false, false, 1);
+			}
+		}
+
+		for (int i = 0; i < 10; i++)
+		{
+			for (int j = 0; j < constraintsF.size(); j++)
+			{
+				constraintsF[j].satisfy(false, false, false, 1);
+			}
+		}
+
 	}else if (i == 2) {
 
-		for (int i = 0; i < 1; i++)
-		{
-			for (int j = 0; j < constraintsF.size(); j++)
+		for (int i = 0; i < 2; i++) {
+
+			for (int j = 0; j < constraintsF.size(); j++){
+				constraintsF[j].satisfy(true, false, false, 1);
+			}
+
+		}
+
+		for (int i = 0; i < 2; i++){
+
+			for (int j = 0; j < constraintsB.size(); j++)
 			{
-				constraintsF[j].satisfy(i);
+				constraintsB[j].satisfy(true, false, false, 1);
 			}
 		}
 
+		for (int i = 0; i < 10; i++) {
 
-		for (int i = 0; i < 1; i++)
-		{
+			for (int j = 0; j < constraintsF.size(); j++) {
+				constraintsF[j].satisfy(true, false, true, 0);
+			}
+
+		}
+
+		for (int i = 0; i < 10; i++) {
+
 			for (int j = 0; j < constraintsB.size(); j++)
 			{
-				constraintsB[j].satisfy(i);
+				constraintsB[j].satisfy(true, false, true, 0);
+			}
+		}
+
+		for (int i = 0; i < 10; i++) {
+
+			for (int j = 0; j < constraintsF.size(); j++) {
+				if (constraintsF[j].p1->isEdge && constraintsF[j].p2->isEdge) {
+					constraintsF[j].satisfy(false, false, false, 0);
+				}
+			}
+
+		}
+
+		for (int i = 0; i < 10; i++) {
+
+			for (int j = 0; j < constraintsB.size(); j++)
+			{
+				if (constraintsB[j].p1->isEdge && constraintsB[j].p2->isEdge) {
+					constraintsB[j].satisfy(false, false, false, 0);
+				}
 			}
 		}
 	}

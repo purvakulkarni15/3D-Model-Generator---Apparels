@@ -6,9 +6,10 @@ public:
 	Particle *p1, *p2;
 	float distance;
 	float k, b;
+	int constraintType;
 
-	Constraint(Particle*, Particle*);
-	void satisfy(int i);
+	Constraint(Particle*, Particle*, int);
+	void satisfy(bool, bool, bool, int);
 
 };
 

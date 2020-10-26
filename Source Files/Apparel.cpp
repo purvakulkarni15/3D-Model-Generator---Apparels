@@ -75,10 +75,6 @@ void Apparel::setTrianglesF(cv::Subdiv2D subdiv, Particle** matrix) {
 			cv::pointPolygonTest(contour, cv::Point2f(midPt3.x, midPt3.y), false) >= 0)
 		{
 			Triangle t = Triangle(p1, p2, p3);
-			glm::vec3 normal = glm::cross(t.p2->vertex - t.p1->vertex, t.p3->vertex - t.p1->vertex);
-			p1->normal += normal;
-			p2->normal += normal;
-			p3->normal += normal;
 			trianglesF.push_back(t);
 		}
 		else {
@@ -161,10 +157,6 @@ void Apparel::setTrianglesB(cv::Subdiv2D subdiv, Particle** matrix) {
 			cv::pointPolygonTest(contour, cv::Point2f(midPt3.x, midPt3.y), false) >= 0)
 		{
 			Triangle t = Triangle(p1, p2, p3);
-			glm::vec3 normal = glm::cross(t.p2->vertex - t.p1->vertex, t.p3->vertex - t.p1->vertex);
-			p1->normal += normal;
-			p2->normal += normal;
-			p3->normal += normal;
 			trianglesB.push_back(t);
 		}
 		else {

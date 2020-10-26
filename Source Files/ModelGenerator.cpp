@@ -13,9 +13,54 @@ ModelGenerator::~ModelGenerator()
 {
 }
 
-void  ModelGenerator::generateModel(ImageProcessor imageProcessorObj) {
+void  ModelGenerator::generate2DModel(ImageProcessor imageProcessorObj) {
 	generateModelF(imageProcessorObj);
 	generateModelB(imageProcessorObj);
+}
+
+void  ModelGenerator::generate3DModel(float xScale, float yScale, glm::vec3 center, const char* front, const char* back) {
+	apparel.modifyObject(glm::vec3(xScale, yScale, 1.0), glm::vec3(center.x / 2.0, center.y / 2.0, 0));
+	clothSimulator.addConstraints(&apparel);
+	intersectApparelWithAvatar();
+	clothSimulator.satisfyConstraints(1);
+
+	float minZF = 99999.0;
+	float minZB = 99999.0;
+	float maxZB = -99999.0;
+	float maxZF = -99999.0;
+
+	float scaleVal = 1;
+
+	for (int i = 0; i < apparel.particlesF.size(); i++) {
+		if (minZF > apparel.particlesF[i].vertex.z) {
+			minZF = apparel.particlesF[i].vertex.z;
+		}
+		if (maxZF < apparel.particlesF[i].vertex.z) {
+			maxZF = apparel.particlesF[i].vertex.z;
+		}
+	}
+
+	for (int i = 0; i < apparel.particlesB.size(); i++) {
+		if (minZB > apparel.particlesB[i].vertex.z) {
+			minZB = apparel.particlesB[i].vertex.z;
+		}
+		if (maxZB < apparel.particlesB[i].vertex.z) {
+			maxZB = apparel.particlesB[i].vertex.z;
+		}
+	}
+
+	if (maxZB > minZF) {
+		move((glm::abs(maxZB - minZF) / 2.0));
+		scaleVal = glm::abs(maxZF - minZB) / (glm::abs(maxZF - minZB)+ glm::abs(maxZB - minZF));
+
+	}
+
+	stitchFrontAndBack();
+	//scale(scaleVal);
+	clothSimulator.satisfyConstraints(2);
+	scale(scaleVal);
+
+	storeModel(front, back);
 }
 
 void ModelGenerator::generateModelF(ImageProcessor imageProcessorObj) {
@@ -34,7 +79,7 @@ void ModelGenerator::generateModelF(ImageProcessor imageProcessorObj) {
 	apparel.fWidth = (float)imageProcessorObj.frontImage.cols;
 	apparel.bHeight = (float)imageProcessorObj.backImage.rows;
 	apparel.bWidth = (float)imageProcessorObj.backImage.cols;
-	apparel.interval = 8;
+	apparel.interval = 5;
 
 	addPoints(apparel.boundaryPointsF, apparel.particlesF, imageProcessorObj.frontImageContourSet, boundingBoxF, true);
 	
@@ -42,6 +87,12 @@ void ModelGenerator::generateModelF(ImageProcessor imageProcessorObj) {
 	
 	Subdiv2D subdiv = triangulate(apparel.particlesF, apparel.bbHeightF, apparel.bbWidthF);
 	apparel.setTrianglesF(subdiv, clothSimulator.clothMatrixF);
+
+	for (int i = 0; i < apparel.particlesF.size(); i++) {
+		apparel.particlesF[i].vertex.x = apparel.particlesF[i].vertex.x - apparel.boundingBoxF[0].x - ((apparel.boundingBoxF[1].x - apparel.boundingBoxF[0].x) / 2.0);
+		apparel.particlesF[i].vertex.y = apparel.particlesF[i].vertex.y - apparel.boundingBoxF[0].y - ((apparel.boundingBoxF[1].y - apparel.boundingBoxF[0].y) / 2.0);
+	}
+
 }
 
 void ModelGenerator::generateModelB(ImageProcessor imageProcessorObj) {
@@ -61,6 +112,12 @@ void ModelGenerator::generateModelB(ImageProcessor imageProcessorObj) {
 
 	Subdiv2D subdiv = triangulate(apparel.particlesB, apparel.bbHeightB, apparel.bbWidthB);
 	apparel.setTrianglesB(subdiv, clothSimulator.clothMatrixB);
+
+
+	for (int i = 0; i < apparel.particlesB.size(); i++) {
+		apparel.particlesB[i].vertex.x = apparel.particlesB[i].vertex.x - apparel.boundingBoxB[0].x - ((apparel.boundingBoxB[1].x - apparel.boundingBoxB[0].x) / 2.0);
+		apparel.particlesB[i].vertex.y = apparel.particlesB[i].vertex.y - apparel.boundingBoxB[0].y - ((apparel.boundingBoxB[1].y - apparel.boundingBoxB[0].y) / 2.0);
+	}
 }
 
 int ModelGenerator::getParticleIndex(vector<Particle*> &particles, glm::vec2 point) {
@@ -135,6 +192,7 @@ void ModelGenerator::addPoints(vector<Particle*> &boundaryPoints, vector<Particl
 
 	int interval = apparel.interval;
 	float width, height;
+	int scanLine = 0;
 
 	width = boundingBox[1].x - boundingBox[0].x;
 	height = boundingBox[1].y - boundingBox[0].y;
@@ -145,14 +203,19 @@ void ModelGenerator::addPoints(vector<Particle*> &boundaryPoints, vector<Particl
 		p.isEdge = true;
 		particles.push_back(p);
 	}
-
-	for (int i = boundingBox[0].y; i < boundingBox[1].y; i+= interval*2) {
+	
+	for (int i = boundingBox[0].y; i < boundingBox[1].y; i += interval*2) {
 		for (int j = boundingBox[0].x; j < boundingBox[1].x; j+= interval*2) {
 			Particle p = Particle(glm::vec3((double)j, (double)i, 0));
+
 			if (cv::pointPolygonTest(countourSet[0], Point2f(p.vertex.x, p.vertex.y), true) > 5.0)
 			{
+				p.isEdge = false;
+				p.scanLine = scanLine;
 				particles.push_back(p);
+				scanLine++;
 			}
+
 		}
 	}
 
@@ -160,10 +223,10 @@ void ModelGenerator::addPoints(vector<Particle*> &boundaryPoints, vector<Particl
 		particles[i].vertex.x = particles[i].vertex.x - boundingBox[0].x;
 		particles[i].vertex.y = particles[i].vertex.y - boundingBox[0].y;
 		if (isFront) {
-			particles[i].vertex.z = avatar.boundingBox[1].z;
+			particles[i].vertex.z = avatar.boundingBox[1].z + 1.0;
 		}
 		else {
-			particles[i].vertex.z = avatar.boundingBox[0].z;
+			particles[i].vertex.z = avatar.boundingBox[0].z - 1.0;
 		}
 		if (particles[i].isEdge) {
 			boundaryPoints.push_back(&particles[i]);
@@ -194,13 +257,16 @@ void ModelGenerator::intersectFrontWithAvatar() {
 
 	RayCaster rayCaster;
 	float z = glm::abs(avatar.boundingBox[1].z - avatar.boundingBox[0].z);
+	float minZ = 9999.0;
+	
 
 	for (int i = 0; i < apparel.particlesF.size(); i++) {
 		glm::vec3 intersectionPoint;
 		float distance;
+		float minDistance = 99999.0;
 		Ray ray;
 		ray.orig = apparel.particlesF[i].vertex;
-		ray.dir = glm::vec3(0, 0, 1.0);
+		ray.dir = glm::vec3(0, 0, -1.0);
 		bool found = false;
 
 
@@ -208,40 +274,53 @@ void ModelGenerator::intersectFrontWithAvatar() {
 
 			if (rayCaster.isRayTriangleIntersect(avatar.triangles[j], ray, &intersectionPoint, &distance)) {
 
-				apparel.particlesF[i].vertex = intersectionPoint;
-
-				if (apparel.particlesF[i].vertex.z < avatar.boundingBox[0].z + z / 2.0) {
-					apparel.particlesF[i].vertex.z = avatar.boundingBox[0].z + z / 2.0;
+				if (distance < minDistance) {
+					apparel.particlesF[i].vertex = intersectionPoint;
+					apparel.particlesF[i].isIntersect = true;
+					minDistance = distance;
+					found = true;
 				}
-
-				//if (apparel.particlesF[i].isEdge) {
-					apparel.particlesF[i].isStatic = true;
-				//}
-
-				found = true;
-				break;
 			}
+		}
+		if (found) {
+			if (glm::abs(apparel.particlesF[i].vertex.z - avatar.boundingBox[1].z) < 30.0) {
+				apparel.particlesF[i].isStatic = true;
+			}
+		}
+		if (found && minZ > apparel.particlesF[i].vertex.z) {
+			minZ = apparel.particlesF[i].vertex.z;
 		}
 
 		if (found == false) {
-			apparel.particlesF[i].vertex.z = avatar.boundingBox[0].z + z / 2.0;
+			apparel.particlesF[i].vertex.z = 9999.0;
 		}
 
 	}
+
+	for (int i = 0; i < apparel.particlesF.size(); i++) {
+		if (apparel.particlesF[i].vertex.z == 9999.0) {
+			apparel.particlesF[i].vertex.z = minZ;
+		}
+	}
+
+
 }
 
 void ModelGenerator::intersectBackWithAvatar() {
 	
 	RayCaster rayCaster;
 	float z = glm::abs(avatar.boundingBox[1].z - avatar.boundingBox[0].z);
+	float maxZ = -9999.0;
+
 
 	for (int i = 0; i < apparel.particlesB.size(); i++) {
 
 		glm::vec3 intersectionPoint;
 		float distance;
+		float minDistance = 99999.0;
 		Ray ray;
 		ray.orig = apparel.particlesB[i].vertex;
-		ray.dir = glm::vec3(0, 0, -1.0);
+		ray.dir = glm::vec3(0, 0, 1.0);
 
 		bool found = false;
 
@@ -249,25 +328,34 @@ void ModelGenerator::intersectBackWithAvatar() {
 
 			if (rayCaster.isRayTriangleIntersect(avatar.triangles[j], ray, &intersectionPoint, &distance)) {
 
-				apparel.particlesB[i].vertex = intersectionPoint;
-
-				if (apparel.particlesB[i].vertex.z > avatar.boundingBox[0].z + z / 2.0) {
-					apparel.particlesB[i].vertex.z = avatar.boundingBox[0].z + z / 2.0;
+				if (minDistance > distance) {
+					apparel.particlesB[i].vertex = intersectionPoint;
+					apparel.particlesB[i].isIntersect = true;
+					minDistance = distance;
+					found = true;
 				}
-
-				//if (apparel.particlesB[i].isEdge) {
-					apparel.particlesB[i].isStatic = true;
-				//}
-
-				found = true;
-				break;
 			}
 		}
 
-		if (found == false) {
-			apparel.particlesB[i].vertex.z = avatar.boundingBox[0].z + z / 2.0;
+		if (found) {
+			if (glm::abs(apparel.particlesB[i].vertex.z - avatar.boundingBox[0].z) < 30.0) {
+				apparel.particlesB[i].isStatic = true;
+			}
+		}
+		if (found && maxZ < apparel.particlesB[i].vertex.z) {
+			maxZ = apparel.particlesB[i].vertex.z;
 		}
 
+		if (found == false) {
+			apparel.particlesB[i].vertex.z = 9999.0;
+		}
+
+	}
+
+	for (int i = 0; i < apparel.particlesB.size(); i++) {
+		if (apparel.particlesB[i].vertex.z == 9999.0) {
+			apparel.particlesB[i].vertex.z = maxZ;
+		}
 	}
 
 }
@@ -276,8 +364,42 @@ void ModelGenerator::intersectApparelWithAvatar() {
 
 	intersectFrontWithAvatar();
 	intersectBackWithAvatar();
+}
 
 
+void ModelGenerator::move(float distance) {
+
+
+
+	for (int i = 0; i < apparel.particlesF.size(); i++) {
+
+		apparel.particlesF[i].vertex.z = apparel.particlesF[i].vertex.z + distance;
+
+	}
+
+	for (int i = 0; i < apparel.particlesB.size(); i++) {
+
+		apparel.particlesB[i].vertex.z = apparel.particlesB[i].vertex.z - distance;
+
+	}
+}
+
+
+void ModelGenerator::scale(float scale) {
+
+
+
+	for (int i = 0; i < apparel.particlesF.size(); i++) {
+
+		apparel.particlesF[i].vertex.z = apparel.particlesF[i].vertex.z * scale;
+
+	}
+
+	for (int i = 0; i < apparel.particlesB.size(); i++) {
+
+		apparel.particlesB[i].vertex.z = apparel.particlesB[i].vertex.z * scale;
+
+	}
 }
 
 void ModelGenerator::stitchFrontAndBack() {
@@ -288,48 +410,43 @@ void ModelGenerator::stitchFrontAndBack() {
 		
 		while (j < apparel.stitchingPointsF[i].size()-1 && j < apparel.stitchingPointsB[i].size()-1) {
 
+			glm::vec3 v = apparel.stitchingPointsF[i][j]->vertex + apparel.stitchingPointsB[i][j]->vertex;
+			v = glm::vec3(v.x / 2.0, v.y / 2.0, v.z / 2.0);
+
+			apparel.stitchingPointsF[i][j]->vertex = v;
+			apparel.stitchingPointsB[i][j]->vertex = v;
+
+			v = apparel.stitchingPointsF[i][j+1]->vertex + apparel.stitchingPointsB[i][j+1]->vertex;
+			v = glm::vec3(v.x / 2.0, v.y / 2.0, v.z / 2.0);
+
+			apparel.stitchingPointsF[i][j+1]->vertex = v;
+			apparel.stitchingPointsB[i][j+1]->vertex = v;
+
+			
+
 			Triangle t1 = Triangle(apparel.stitchingPointsF[i][j], apparel.stitchingPointsB[i][j], apparel.stitchingPointsF[i][j + 1]);
 			Triangle t2 = Triangle(apparel.stitchingPointsF[i][j + 1], apparel.stitchingPointsB[i][j], apparel.stitchingPointsB[i][j + 1]);
 
 			apparel.trianglesB.push_back(t1);
 			apparel.trianglesB.push_back(t2);
 
-			glm::vec3 normal = glm::cross(t1.p2->vertex - t1.p1->vertex, t1.p3->vertex - t1.p1->vertex);
-			
-			t1.p1->normal += normal;
-			t1.p2->normal += normal;
-			t1.p3->normal += normal;
-
-			normal = glm::cross(t2.p2->vertex - t2.p1->vertex, t2.p3->vertex - t2.p1->vertex);
-			t2.p1->normal += normal;
-			t2.p2->normal += normal;
-			t2.p3->normal += normal;
-
 			j++;
 		}
 
 		while (j < apparel.stitchingPointsF[i].size()-1) {
-			
+			apparel.stitchingPointsF[i][j]->vertex = apparel.stitchingPointsB[i][apparel.stitchingPointsB[i].size() - 1]->vertex;
+
 			Triangle t1 = Triangle(apparel.stitchingPointsF[i][j], apparel.stitchingPointsB[i][apparel.stitchingPointsB[i].size()-1], apparel.stitchingPointsF[i][j + 1]);	
 			apparel.trianglesB.push_back(t1);
 			
-			glm::vec3 normal = glm::cross(t1.p2->vertex - t1.p1->vertex, t1.p3->vertex - t1.p1->vertex);
-
-			t1.p1->normal += normal;
-			t1.p2->normal += normal;
-			t1.p3->normal += normal;
-
 			j++;
 		}
 
 		while (j < apparel.stitchingPointsB[i].size() - 1) {
 
-			Triangle t1 = Triangle(apparel.stitchingPointsB[i][j], apparel.stitchingPointsF[i][apparel.stitchingPointsF[i].size() - 1], apparel.stitchingPointsB[i][j + 1]);
-			glm::vec3 normal = glm::cross(t1.p2->vertex - t1.p1->vertex, t1.p3->vertex - t1.p1->vertex);
+			apparel.stitchingPointsB[i][j]->vertex = apparel.stitchingPointsF[i][apparel.stitchingPointsF[i].size() - 1]->vertex;
 
-			t1.p1->normal += normal;
-			t1.p2->normal += normal;
-			t1.p3->normal += normal;
+			Triangle t1 = Triangle(apparel.stitchingPointsB[i][j], apparel.stitchingPointsF[i][apparel.stitchingPointsF[i].size() - 1], apparel.stitchingPointsB[i][j + 1]);
 			
 			apparel.trianglesB.push_back(t1);
 			
@@ -337,18 +454,16 @@ void ModelGenerator::stitchFrontAndBack() {
 		}
 
 	}
-
 }
 
 
 void ModelGenerator::storeModel(const char* frontImageFileName, const char* backImageFileName) {
 
-	CreateDirectory("C:\\Users\\DELL\\source\\repos\\RapidDigitizationOfApparels\\RapidDigitizationOfApparels\\Model", NULL);
-	CopyFile(frontImageFileName, "C:\\Users\\DELL\\source\\repos\\RapidDigitizationOfApparels\\RapidDigitizationOfApparels\\Model\\front.jpg", false);
-	CopyFile(backImageFileName, "C:\\Users\\DELL\\source\\repos\\RapidDigitizationOfApparels\\RapidDigitizationOfApparels\\Model\\back.jpg", false);
+	CreateDirectory(modelDirectory, NULL);
+	CopyFile(frontImageFileName, modelTextureFrontImage, false);
+	CopyFile(backImageFileName, modelTextureBackImage, false);
 
-
-	FILE* fp = fopen("C:\\Users\\DELL\\source\\repos\\RapidDigitizationOfApparels\\RapidDigitizationOfApparels\\Model\\apparel.obj", "w");
+	FILE* fp = fopen(modelObj, "w");
 
 	fprintf(fp, "mtllib apparel.mtl\n");
 
@@ -363,6 +478,7 @@ void ModelGenerator::storeModel(const char* frontImageFileName, const char* back
 		fprintf(fp, "v %f %f %f\n", apparel.particlesB[i].vertex.x, apparel.particlesB[i].vertex.y, apparel.particlesB[i].vertex.z);
 		fprintf(fp, "vt %f %f\n", apparel.particlesB[i].texture.x/apparel.bWidth, 1 - apparel.particlesB[i].texture.y/apparel.bHeight);
 	}
+
 
 	fprintf(fp, "usemtl front\n");
 	for (int i = 0; i < apparel.trianglesF.size(); i++) {
@@ -383,12 +499,11 @@ void ModelGenerator::storeModel(const char* frontImageFileName, const char* back
 
 
 		fprintf(fp, "f %d/%d %d/%d %d/%d\n", index1, index1, index2, index2, index3, index3);
-		//fprintf(fp, "f %d/%d/%d %d/%d/%d %d/%d/%d\n", index1, index1, index1, index2, index2, index2, index3, index3, index3);
 	}
 
 	fclose(fp);
 
-	FILE* fp2 = fopen("C:\\Users\\DELL\\source\\repos\\RapidDigitizationOfApparels\\RapidDigitizationOfApparels\\Model\\apparel.mtl", "w");
+	FILE* fp2 = fopen(modelMtl, "w");
 
 	fprintf(fp2, "newmtl front\n");
 	fprintf(fp2, "map_Ka front.jpg \n");
