@@ -4,6 +4,8 @@
 
 ### Hardware Components
 
+<img src="https://github.com/purvakulkarni15/Rapid-Digitization-Of-Articles/blob/main/HardwareSetup.png" width="100%" height="750">
+
 The hardware system includes a rapid digitization station that comprises 
 1. a transparent conveyor belt 105, 
 2. a dc motor 110, 
