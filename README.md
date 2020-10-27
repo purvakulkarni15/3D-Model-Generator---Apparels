@@ -20,5 +20,5 @@
 
 ### Results
 <img src="https://github.com/purvakulkarni15/Rapid-Digitization-Of-Articles/blob/main/Result/Result-1.PNG" width="100%" height="350">
-<img src="https://github.com/purvakulkarni15/Rapid-Digitization-Of-Articles/blob/main/Result/Result-2.PNG" width="100%" height="350">
+<img src="https://github.com/purvakulkarni15/Rapid-Digitization-Of-Articles/blob/main/Result/Result-2.PNG" width="100%" height="375">
 <img src="https://github.com/purvakulkarni15/Rapid-Digitization-Of-Articles/blob/main/Result/Result-3.PNG" width="100%" height="500">
