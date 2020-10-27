@@ -2,7 +2,7 @@
 
 ![](gif.gif)
 
-### Software Algorithm
+### Software Flow
 
 <img src="https://github.com/purvakulkarni15/Rapid-Digitization-Of-Articles/blob/main/Result/SoftwareAlgorithm.PNG" width="100%" height="500">
 </pre>
