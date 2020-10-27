@@ -2,9 +2,14 @@
 
 ![](gif.gif)
 
+### Software Flow
+
+<img src="https://github.com/purvakulkarni15/Rapid-Digitization-Of-Articles/blob/main/Result/SoftwareAlgorithm.PNG" width="100%" height="500">
+</pre>
+
 ### Hardware Components
 
-<img src="https://github.com/purvakulkarni15/Rapid-Digitization-Of-Articles/blob/main/HardwareSetup.png" width="100%" height="750">
+<img src="https://github.com/purvakulkarni15/Rapid-Digitization-Of-Articles/blob/main/HardwareSetup.png" width="600" height="500">
 
 The hardware system includes a rapid digitization station that comprises 
 1. a transparent conveyor belt 105, 
@@ -33,11 +38,6 @@ The hardware system includes a rapid digitization station that comprises
 11. The system 100 rests on platform 165. 
 12. However, the system 100 is capable to withstand on any ground surface. 
 13. The visual communication device 170 communicates with system 100 using Wi-Fi signals.
-
-### Software Flow
-
-<img src="https://github.com/purvakulkarni15/Rapid-Digitization-Of-Articles/blob/main/Result/SoftwareAlgorithm.PNG" width="100%" height="500">
-</pre>
 
 ### Language, libraries and SDKS:
 
